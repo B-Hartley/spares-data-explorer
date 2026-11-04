@@ -1,0 +1,75 @@
+@page
+@model UsersModel
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage users · Spares Data Explorer</title>
+  <link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="~/css/app.css" asp-append-version="true">
+</head>
+<body class="admin-page">
+<header class="page-header">
+  <div><p class="eyebrow">CLICK SPARES · ADMINISTRATION</p><h1>Manage users</h1><p class="muted">Create staff accounts and manage access.</p></div>
+  <nav class="account-actions" aria-label="Administration">
+    <a asp-page="/Usage" class="button secondary">Session usage</a>
+    <a asp-page="/Index" class="button secondary">Explorer</a>
+    <form method="post" asp-page="/Logout"><button class="button secondary" type="submit">Sign out</button></form>
+  </nav>
+</header>
+<main class="admin-main">
+  @if (!string.IsNullOrWhiteSpace(Model.Message)) { <p role="status" class="notice">@Model.Message</p> }
+  @if (!string.IsNullOrWhiteSpace(Model.Error)) { <p role="alert" class="notice error">@Model.Error</p> }
+  <section class="panel" aria-labelledby="create-user-title">
+    <h2 id="create-user-title">Create user</h2>
+    <form method="post" asp-page-handler="Create" class="form-grid">
+      <label class="form-field">Email address<input type="email" name="email" maxlength="254" placeholder="name@clickspares.co.uk" autocomplete="off" required></label>
+      <label class="form-field">Initial password<input type="password" name="password" minlength="12" maxlength="256" placeholder="At least 12 characters" autocomplete="new-password" required></label>
+      <label class="checkbox-field"><input type="checkbox" name="isAdmin" value="true"> Administrator</label>
+      <button type="submit" class="button primary">Create account</button>
+    </form>
+    <p class="muted">Accounts are restricted to Click Spares staff. Administrators also need an approved connection IP to manage users, review session history and import data.</p>
+  </section>
+  <section class="panel" aria-labelledby="existing-users-title">
+    <h2 id="existing-users-title">Existing users</h2>
+    <p class="muted">Online time is estimated from activity. Overlapping sessions count once. Resetting a password, disabling or deleting an account revokes its existing sign-ins.</p>
+    @if (Model.Accounts.Count == 0) { <p>No managed users have been created.</p> }
+    else
+    {
+      <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Last login (UK)</th><th>Online (30d)</th><th>Logins (30d)</th><th>Reset password</th><th>Access</th><th>Delete account</th></tr></thead>
+        <tbody>
+        @foreach (var account in Model.Accounts)
+        {
+          var isSelf = string.Equals(account.Email, User.Identity?.Name, StringComparison.OrdinalIgnoreCase);
+          var lastAdmin = account.IsAdmin && account.Enabled && Model.Accounts.Count(x => x.IsAdmin && x.Enabled) <= 1;
+          var protectedAccount = isSelf || lastAdmin;
+          <tr>
+            <td>@account.Email</td><td>@(account.IsAdmin ? "Administrator" : "User")</td><td>@(account.Enabled ? "Enabled" : "Disabled")</td>
+            <td>@Model.LastLogin(account.Email)</td><td>@Model.MinutesLast30Days(account.Email).ToString("N0") min</td><td>@Model.LoginsLast30Days(account.Email).ToString("N0")</td>
+            <td><form method="post" asp-page-handler="Password" class="table-actions">
+              <input type="hidden" name="email" value="@account.Email">
+              <input type="password" name="newPassword" minlength="12" maxlength="256" aria-label="New password for @account.Email" placeholder="New password (12+)" autocomplete="new-password" required>
+              <button type="submit" class="button secondary">Reset</button>
+            </form></td>
+            <td><form method="post" asp-page-handler="Toggle">
+              <input type="hidden" name="email" value="@account.Email"><input type="hidden" name="enabled" value="@(account.Enabled ? "false" : "true")">
+              <button type="submit" class="button secondary" disabled="@(account.Enabled && protectedAccount)">@(account.Enabled ? "Disable" : "Enable")</button>
+            </form></td>
+            <td><form method="post" asp-page-handler="Delete" class="table-actions">
+              <input type="hidden" name="email" value="@account.Email">
+              <label class="checkbox-field"><input type="checkbox" name="confirmDelete" value="true" required disabled="@protectedAccount"> Confirm deletion</label>
+              <button type="submit" class="button danger" disabled="@protectedAccount" title="@(protectedAccount ? "Your own account and the last enabled administrator are protected" : "Permanently delete this account")">Delete</button>
+            </form></td>
+          </tr>
+        }
+        </tbody>
+      </table>
+      </div>
+    }
+  </section>
+</main>
+</body>
+</html>

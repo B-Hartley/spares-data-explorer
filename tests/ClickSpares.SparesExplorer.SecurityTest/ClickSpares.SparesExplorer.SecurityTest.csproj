@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="../../Services/UserStore.cs" Link="Services/UserStore.cs" />
+    <Compile Include="../../Services/AdminAccountScope.cs" Link="Services/AdminAccountScope.cs" />
+    <Compile Include="../../Services/AdminIpAccess.cs" Link="Services/AdminIpAccess.cs" />
+    <Compile Include="../../Services/UsageSessionLog.cs" Link="Services/UsageSessionLog.cs" />
+    <Compile Include="../../Services/UsageSessionAnalytics.cs" Link="Services/UsageSessionAnalytics.cs" />
+    <Compile Include="../../Services/DelimitedText.cs" Link="Services/DelimitedText.cs" />
+    <Compile Include="../../Models/ExplorerModels.cs" Link="Models/ExplorerModels.cs" />
+  </ItemGroup>
+</Project>

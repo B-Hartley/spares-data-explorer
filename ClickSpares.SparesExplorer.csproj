@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ClickSpares.SparesExplorer</RootNamespace>
+    <AssemblyName>ClickSpares.SparesExplorer</AssemblyName>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="tests/**;Publish-IIS/**;artifacts/**" />
+    <!-- Accounts, keys, imports and logs are server-local, never release content. -->
+    <Content Remove="Data/**;ReferenceConfig/**;SampleData/**;tests/**;Publish-IIS/**;artifacts/**;appsettings*.json;.openai/**" />
+    <None Remove="Data/**;ReferenceConfig/**;SampleData/**;tests/**;Publish-IIS/**;artifacts/**;appsettings*.json;.openai/**" />
+  </ItemGroup>
+</Project>

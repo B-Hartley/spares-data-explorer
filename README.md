@@ -2,6 +2,12 @@
 
 An authenticated ASP.NET Core 10 dashboard for exploring spare-parts demand and fulfilment. It follows the Razor Pages, plain JavaScript, server-local CSV and IIS approach used by the Whitemeadow swatch site.
 
+## Try the portable prototype
+
+Download [demo/spares-prototype.html](demo/spares-prototype.html) and open it in a modern browser to try the working filters, charts, drill-downs, request details and CSV export. The file runs offline and contains **synthetic DEMO data only**.
+
+This portable demonstration is separate from the authenticated server application below. Real CSVs, user management and imports remain protected by staff sign-in and administrator controls. Rebuild the demo with `npm run demo`; see [the demo guide](demo/README.md) for details.
+
 ## What you can do
 
 - Compare demand, fulfilled demand, unfulfilled demand and fulfilment percentage by manufacturer, factory, product or BasePart.
@@ -106,7 +112,11 @@ See [SECURITY.md](SECURITY.md) for deployment boundaries and operational notes.
 ```sh
 dotnet build tests/Spares.SelfTests.csproj -c Release
 dotnet run --project tests/Spares.SelfTests.csproj -c Release --no-build
+dotnet run --project tests/ClickSpares.SparesExplorer.SecurityTest/ClickSpares.SparesExplorer.SecurityTest.csproj -c Release
+dotnet run --project tests/ClickSpares.SparesExplorer.IntegrationTest/ClickSpares.SparesExplorer.IntegrationTest.csproj -c Release
 npm run check
 ```
 
 Tests use synthetic data to cover the composite join, request-specific BaseProduct, status rules, duplicate lines, zero quantities, requests without lines, filtering, totals, date handling and CSV validation. GitHub Actions also publishes a self-contained Windows IIS artifact and checks that private runtime folders are absent.
+
+The HTTP integration suite runs the real application in memory with TestServer, an isolated temporary data directory and synthetic CSVs. It checks login cookies, antiforgery, staff and administrator access, session revocation, protected runtime paths, and CSV preview/apply behaviour without opening a network listener.

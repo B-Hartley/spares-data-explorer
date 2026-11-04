@@ -1,0 +1,52 @@
+name: Build, verify and package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript
+        run: npm run check
+      - name: Build application and self-tests
+        run: dotnet build tests/Spares.SelfTests.csproj -c Release
+      - name: Verify analytical and import semantics
+        run: dotnet run --project tests/Spares.SelfTests.csproj -c Release --no-build
+      - name: Verify account and access boundaries
+        run: dotnet run --project tests/ClickSpares.SparesExplorer.SecurityTest/ClickSpares.SparesExplorer.SecurityTest.csproj -c Release
+      - name: Verify authenticated HTTP and import flows
+        run: dotnet run --project tests/ClickSpares.SparesExplorer.IntegrationTest/ClickSpares.SparesExplorer.IntegrationTest.csproj -c Release
+      - name: Publish self-contained Windows IIS application
+        run: dotnet publish ClickSpares.SparesExplorer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/IIS
+      - name: Verify private runtime folders are excluded
+        shell: bash
+        run: |
+          test ! -d artifacts/IIS/Data
+          test ! -d artifacts/IIS/SampleData
+          test ! -f artifacts/IIS/appsettings.json
+          test -f artifacts/IIS/ClickSpares.SparesExplorer.exe
+          test -f artifacts/IIS/web.config
+      - name: Include deployment guide
+        run: cp DEPLOYMENT.md artifacts/IIS/DEPLOYMENT.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spares-data-explorer-IIS
+          path: artifacts/IIS/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,32 @@
+@page
+@model LoginModel
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Spares Data Explorer</title>
+  <link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="~/css/app.css" asp-append-version="true">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-card" aria-labelledby="login-title">
+      <p class="eyebrow">CLICK SPARES · STAFF ACCESS</p>
+      <h1 id="login-title">Spares Data Explorer</h1>
+      <p class="muted">Understand spare parts demand, find what drives it and track fulfilment.</p>
+      <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+        <div asp-validation-summary="All" class="notice error" role="alert"></div>
+        <label class="form-field" asp-for="Input.Email">Email address
+          <input asp-for="Input.Email" type="email" autocomplete="username" maxlength="254" placeholder="name@clickspares.co.uk" required autofocus>
+        </label>
+        <label class="form-field" asp-for="Input.Password">Password
+          <input asp-for="Input.Password" type="password" autocomplete="current-password" maxlength="256" required>
+        </label>
+        <button type="submit" class="button primary">Sign in</button>
+      </form>
+      <p class="muted">Use your Click Spares account. Ask an administrator if you need access or a password reset.</p>
+    </section>
+  </main>
+</body>
+</html>

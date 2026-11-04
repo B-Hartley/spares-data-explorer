@@ -1,0 +1,144 @@
+@page
+@inject ClickSpares.SparesExplorer.Services.AdminIpAccess AdminAccess
+@{
+    Layout = null;
+    var canManage = AdminAccess.CanManage(HttpContext);
+    var email = User.Identity?.Name ?? "Signed in";
+    var initials = email.Length > 0 ? email[..1].ToUpperInvariant() : "C";
+}
+<!doctype html>
+<html lang="en-GB">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Explore spare parts demand and fulfilment by manufacturer, factory, product and BasePart.">
+    <title>Demand &amp; fulfilment · Click Spares</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true">
+    <script src="~/js/app.js" asp-append-version="true" defer></script>
+</head>
+<body class="explorer-page" data-can-manage="@(canManage ? "true" : "false")">
+    <a class="skip-link" href="#main-content">Skip to dashboard</a>
+    @Html.AntiForgeryToken()
+    <aside class="sidebar" aria-label="Workspace navigation">
+        <a class="brand" asp-page="/Index" aria-label="Click Spares dashboard">
+            <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 2 29 9.5 16 17 3 9.5Z"/><path d="m3 16 13 7.5L29 16M3 22.5 16 30 29 22.5"/></svg></span>
+            <span><strong>CLICK SPARES</strong><small>Demand intelligence</small></span>
+        </a>
+        <p class="nav-heading">WORKSPACE</p>
+        <nav class="main-nav">
+            <a class="nav-link is-active" asp-page="/Index" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Explore demand<span class="nav-active-dot"></span></a>
+            @if (canManage)
+            {
+                <a class="nav-link" asp-page="/Imports"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>Data imports</a>
+            }
+        </nav>
+        @if (canManage)
+        {
+            <p class="nav-heading">ADMINISTRATION</p>
+            <nav class="main-nav" aria-label="Administration">
+                <a class="nav-link" asp-page="/Users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M16 5a3.5 3.5 0 0 1 0 7m3 3a6 6 0 0 1 3 5"/></svg>Manage users</a>
+                <a class="nav-link" asp-page="/Usage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Session activity</a>
+            </nav>
+        }
+        <div class="sidebar-note">
+            <span class="sidebar-note-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg></span>
+            <strong>Private workspace</strong>
+            <p>Approved Click Spares accounts.<br>Secure, shared data.</p>
+        </div>
+        <div class="sidebar-account">
+            <span class="avatar" aria-hidden="true">@initials</span>
+            <div class="account-info"><span>@email</span><small>@(canManage ? "Administrator" : "Team member")</small></div>
+            <form method="post" asp-page="/Logout"><button class="signout-icon" type="submit" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h5m5-13 5 5-5 5m-7-5h12"/></svg></button></form>
+        </div>
+    </aside>
+
+    <main id="main-content" class="workspace">
+        <header class="dashboard-header">
+            <div>
+                <div class="header-eyebrow"><span class="eyebrow">SPARES DATA EXPLORER</span><span class="prototype-label">Prototype</span></div>
+                <h1>Demand &amp; fulfilment</h1>
+                <p class="page-description">Explore the factories, products and parts behind your spares demand.</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="button button-quiet" id="restorePanes" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Zm0 6h16M10 10v10"/></svg>Show all panes</button>
+                <button type="button" class="button" id="refreshButton" title="Refresh the current view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10a8 8 0 0 0-14-5L3 8m0-5v5h5M4 14a8 8 0 0 0 14 5l3-3m0 5v-5h-5"/></svg><span>Refresh</span></button>
+                <button type="button" class="button button-primary" id="exportButton" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Export results</span></button>
+            </div>
+        </header>
+
+        <div class="dataset-strip">
+            <div class="dataset-info"><span class="status-dot" id="datasetStatusDot"></span><strong id="datasetLabel">Connecting to your data…</strong><span class="dataset-separator">/</span><span id="datasetMeta">Checking the latest snapshot</span></div>
+            <button type="button" class="data-quality-button" id="qualityButton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 16H3Z"/><path d="M12 9v4m0 3v1"/></svg><span id="qualityButtonLabel">Data checks</span></button>
+        </div>
+
+        <div id="errorBanner" class="notice notice-error" role="alert" hidden><div><strong id="errorTitle">We couldn’t update the dashboard.</strong><p id="errorMessage"></p></div><button type="button" class="button" id="retryButton">Try again</button></div>
+
+        <section class="filter-panel panel" aria-labelledby="filtersHeading">
+            <div class="filter-heading-row">
+                <div class="filter-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/><circle cx="8" cy="5" r="2"/><circle cx="15" cy="12" r="2"/></svg><h2 id="filtersHeading">Filters</h2><span id="activeFilterCount" class="count-badge" hidden>0</span></div>
+                <div class="filter-heading-actions"><label class="live-toggle"><input id="liveFilters" type="checkbox" checked><span class="toggle-track" aria-hidden="true"></span>Live filtering</label><button type="button" class="button button-small" id="applyFilters" hidden>Apply filters</button><button type="button" class="text-button" id="resetFilters">Reset all</button><button type="button" class="icon-button filter-collapse" id="filterCollapse" aria-expanded="true" aria-controls="filterContents" aria-label="Collapse filters"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button></div>
+            </div>
+            <div id="filterContents">
+                <div class="filter-primary-row">
+                    <label class="field date-basis-field"><span>Date field</span><select id="dateBasis"><option value="request">Request date</option><option value="despatch">Despatch date</option></select></label>
+                    <div class="date-fields"><label class="field"><span>From</span><input type="date" id="dateFrom" aria-label="From date"></label><span class="date-arrow" aria-hidden="true">→</span><label class="field"><span>To</span><input type="date" id="dateTo" aria-label="To date"></label></div>
+                    <button type="button" class="date-reset text-button" id="allDates">All dates</button>
+                    <label class="field search-field"><span>Search across demand</span><span class="search-input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" id="globalSearch" placeholder="Product, part, description or request…" autocomplete="off"></span></label>
+                    <label class="field outcome-field"><span>Fulfilment</span><select id="outcome"><option value="all">All demand</option><option value="fulfilled">Fulfilled only</option><option value="unfulfilled">Not fulfilled only</option></select></label>
+                </div>
+                <div class="dimension-filters" id="dimensionFilters"></div>
+                <p id="dateBasisNote" class="filter-footnote" hidden>Despatch-date filtering excludes requests with no despatch date. Fulfilment still follows the Satisfied status.</p>
+            </div>
+            <div class="active-filters" id="activeFilters" aria-label="Active filters" hidden></div>
+        </section>
+
+        <section class="summary-section" aria-labelledby="summaryHeading">
+            <div class="section-heading summary-heading"><div><h2 id="summaryHeading">Your demand, at a glance</h2><p id="scopeSummary">All available data</p></div><label class="metric-picker"><span>Measure by</span><select id="metric"><option value="units">Requested units</option><option value="requests">Customer requests</option><option value="lines">Part request lines</option></select></label></div>
+            <div class="kpi-grid" id="kpiGrid" aria-live="polite" aria-busy="true">
+                <article class="kpi-card"><div class="kpi-heading"><h3 id="demandKpiLabel">Part demand</h3><span class="kpi-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5Zm-9 5v9l9 5 9-5V8m-9 5v9M7.5 5.5l9 5"/></svg></span></div><strong class="kpi-value" id="demandKpi">—</strong><p id="demandKpiSub">Requested part quantities</p></article>
+                <article class="kpi-card kpi-fulfilled"><div class="kpi-heading"><h3>Fulfilled</h3><span class="kpi-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span></div><strong class="kpi-value" id="fulfilledKpi">—</strong><p id="fulfilledKpiSub">Marked as Satisfied</p></article>
+                <article class="kpi-card kpi-unfulfilled"><div class="kpi-heading"><h3>Not fulfilled</h3><span class="kpi-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3v1"/></svg></span></div><strong class="kpi-value" id="unfulfilledKpi">—</strong><p id="unfulfilledKpiSub">All other request statuses</p></article>
+                <article class="kpi-card kpi-rate"><div class="kpi-heading"><h3>Fulfilment rate</h3><span class="kpi-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 14-14"/><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/></svg></span></div><strong class="kpi-value" id="rateKpi">—</strong><p id="rateKpiSub">By requested units</p></article>
+            </div>
+            <div class="scope-facts" id="scopeFacts"></div>
+        </section>
+
+        <div class="chart-grid" id="chartGrid">
+            <section class="panel chart-panel" id="trendPanel" aria-labelledby="trendHeading">
+                <div class="panel-heading"><div><h2 id="trendHeading">Demand over time</h2><p id="trendSubtitle">Requested units by request date</p></div><div class="panel-tools"><div class="segmented-control" role="group" aria-label="Trend period"><button type="button" data-trend="day">Day</button><button type="button" data-trend="week" class="is-selected" aria-pressed="true">Week</button><button type="button" data-trend="month">Month</button></div><button type="button" class="pane-close" data-hide-pane="trendPanel" aria-label="Hide demand over time" title="Hide this pane">×</button></div></div>
+                <div class="chart-legend"><span><i class="legend-dot fulfilled-dot"></i>Fulfilled</span><span><i class="legend-dot unfulfilled-dot"></i>Not fulfilled</span></div>
+                <div class="trend-chart" id="trendChart" role="img" aria-label="Demand over time is loading"><div class="chart-placeholder">Loading demand…</div></div>
+                <div class="chart-caption" id="trendCaption">Weekly dates are week commencing Monday.</div>
+            </section>
+            <section class="panel outcome-panel" id="outcomePanel" aria-labelledby="outcomesHeading">
+                <div class="panel-heading"><div><h2 id="outcomesHeading">Request outcomes</h2><p id="outcomesSubtitle">Every status, in one view</p></div><button type="button" class="pane-close" data-hide-pane="outcomePanel" aria-label="Hide request outcomes" title="Hide this pane">×</button></div>
+                <div id="statusBar" class="status-overview" aria-hidden="true"></div>
+                <div id="statusList" class="status-list"><p class="muted">Loading outcomes…</p></div>
+                <p class="outcome-note">Part quantities inherit the request’s status; the files do not identify partial fulfilment.</p>
+            </section>
+        </div>
+
+        <section class="panel breakdown-panel" aria-labelledby="breakdownHeading" id="breakdownPanel">
+            <div class="panel-heading breakdown-heading"><div><div class="section-kicker">DRILL INTO YOUR DATA</div><h2 id="breakdownHeading" tabindex="-1">Demand by factory</h2><p id="breakdownSubtitle">Select a factory to see its products, then the parts behind their demand.</p></div><button type="button" class="button button-small" id="viewRequests" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h12v17H4V4h4m0-2h8v5H8Zm0 10h8m-8 4h8"/></svg>View requests</button></div>
+            <div class="breakdown-toolbar"><div class="group-tabs" role="tablist" aria-label="Breakdown dimension"><button type="button" role="tab" data-group="manufacturer" aria-selected="false">Manufacturers</button><button type="button" role="tab" data-group="factory" class="is-selected" aria-selected="true">Factories</button><button type="button" role="tab" data-group="product" aria-selected="false">Products</button><button type="button" role="tab" data-group="basePart" aria-selected="false">BaseParts</button></div><label class="sort-control"><span>Sort</span><select id="sort"><option value="demand:desc">Most demand</option><option value="demand:asc">Least demand</option><option value="unfulfilled:desc">Most not fulfilled</option><option value="unfulfilled:asc">Fewest not fulfilled</option><option value="fulfilment:asc">Lowest fulfilment</option><option value="fulfilment:desc">Highest fulfilment</option><option value="name:asc">Name A–Z</option><option value="name:desc">Name Z–A</option></select></label></div>
+            <div class="drill-path" id="drillPath" hidden><button type="button" class="back-button" id="drillBack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6-6 6 6 6M4 12h16"/></svg>Back one level</button><div id="breadcrumbs" aria-label="Drill-down path"></div></div>
+            <div class="table-scroll" id="breakdownTableWrap">
+                <table class="data-table breakdown-table" id="breakdownTable">
+                    <thead><tr><th scope="col" class="rank-column">#</th><th scope="col"><button type="button" class="table-sort" data-sort="name" id="groupColumnHeading">Factory</button></th><th scope="col" class="numeric"><button type="button" class="table-sort" data-sort="demand" id="demandColumnHeading">Demand</button></th><th scope="col" class="numeric">Fulfilled</th><th scope="col" class="numeric"><button type="button" class="table-sort" data-sort="unfulfilled">Not fulfilled</button></th><th scope="col" class="rate-column"><button type="button" class="table-sort" data-sort="fulfilment">Fulfilment</button></th><th scope="col" class="row-action-column"><span class="sr-only">Drill down</span></th></tr></thead>
+                    <tbody id="breakdownBody"><tr><td colspan="7" class="table-state"><span class="loading-spinner"></span>Loading your breakdown…</td></tr></tbody>
+                </table>
+            </div>
+            <p id="basePartCountNote" class="table-footnote" hidden>One request can include several BaseParts. Request counts in this breakdown may add up to more than the distinct request total.</p>
+            <div class="table-pagination"><span id="resultCount">Loading results…</span><div class="pagination-controls"><label>Rows<select id="pageSize"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></label><span id="pageLabel">Page 1</span><button type="button" class="icon-button" id="previousPage" aria-label="Previous page" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><button type="button" class="icon-button" id="nextPage" aria-label="Next page" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div></div>
+        </section>
+
+        <aside class="method-note" id="guidancePanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg><p><strong>How to read this dashboard.</strong> “Satisfied” means fulfilled; all other statuses count as not fulfilled. Demand is the quantity requested, not a product failure rate. Use the measure selector to compare units, requests or part lines.</p><button type="button" class="pane-close" data-hide-pane="guidancePanel" aria-label="Hide guidance" title="Hide this guidance">×</button></aside>
+        <footer class="workspace-footer"><span>Click Spares · Spares data explorer</span><span id="lastUpdated">Secure data · live filters</span></footer>
+    </main>
+
+    <dialog id="qualityDialog" class="side-dialog" aria-labelledby="qualityTitle"><div class="dialog-heading"><div><span class="eyebrow">DATA TRANSPARENCY</span><h2 id="qualityTitle">Data checks &amp; sources</h2></div><button type="button" class="icon-button dialog-close" data-close-dialog="qualityDialog" aria-label="Close data checks">×</button></div><div class="dialog-body"><p class="dialog-intro">Validation keeps incomplete or unusual source records visible, so you can understand what the figures include.</p><h3>Checks</h3><div id="qualityChecks"></div><h3 class="dialog-section-title">Source files</h3><div id="sourceFiles"></div><div class="method-box"><h3>Calculation rules</h3><ul><li>Only Satisfied (including the spelling Satified) is fulfilled.</li><li>Part units are the sum of CustReqParts.Qty. Assembly quantities are not a multiplier.</li><li>Requests without part lines remain in request totals.</li><li>Product and PartID together identify a part. Repeated request lines are retained.</li><li>Names missing from manufacturer or factory lookups remain in the analysis.</li></ul></div></div></dialog>
+    <dialog id="requestsDialog" class="requests-dialog" aria-labelledby="requestsTitle"><div class="dialog-heading"><div><span class="eyebrow">BEHIND THE NUMBERS</span><h2 id="requestsTitle">Matching requests</h2><p id="requestsSubtitle">Current filters</p></div><button type="button" class="icon-button dialog-close" data-close-dialog="requestsDialog" aria-label="Close request details">×</button></div><div id="requestRows" class="dialog-body request-rows"></div><div class="dialog-pagination"><span id="requestResultCount"></span><div class="pagination-controls"><button type="button" class="button button-small" id="previousRequestPage">Previous</button><span id="requestPageLabel"></span><button type="button" class="button button-small" id="nextRequestPage">Next</button></div></div></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

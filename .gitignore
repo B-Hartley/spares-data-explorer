@@ -1,0 +1,17 @@
+bin/
+obj/
+Data/
+Publish-IIS/
+artifacts/
+appsettings*.json
+!ReferenceConfig/appsettings.example.json
+.openai/
+.env
+.env.*
+*.user
+*.suo
+*.pfx
+*.pem
+*.key
+node_modules/
+.DS_Store

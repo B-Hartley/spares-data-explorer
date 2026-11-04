@@ -1,0 +1,10 @@
+{
+  "name": "click-spares-data-explorer",
+  "private": true,
+  "description": "Optional development launcher; the application itself is ASP.NET Core.",
+  "scripts": {
+    "dev": "node Scripts/preview.mjs",
+    "demo": "node Scripts/Build-Demo.mjs",
+    "check": "node --check wwwroot/js/app.js && node --check wwwroot/js/imports.js"
+  }
+}

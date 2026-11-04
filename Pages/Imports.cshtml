@@ -1,0 +1,53 @@
+@page
+@model ClickSpares.SparesExplorer.Pages.ImportsModel
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Data imports · Spares explorer</title>
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/imports.css" asp-append-version="true" />
+</head>
+<body>
+<div class="imports-shell">
+    <header class="imports-header">
+        <a class="imports-brand" href="/">CLICK SPARES <span>Spares explorer</span></a>
+        <a class="button secondary" href="/">← Back to explorer</a>
+    </header>
+    <main id="main-content">
+        <div class="imports-title"><p class="eyebrow">DATA WORKSPACE</p><h1>Keep your demand data current.</h1><p>Upload the seven CSV exports together. Check the results, then apply a complete replacement snapshot.</p></div>
+        @Html.AntiForgeryToken()
+        <div id="import-message" class="import-message" role="status" aria-live="polite" hidden></div>
+        <div class="imports-columns">
+            <section class="import-panel" aria-labelledby="upload-title">
+                <div class="import-panel-heading"><span class="step-number">01</span><div><h2 id="upload-title">Choose your exports</h2><p>CSV · up to 25 MB per file · 95 MB in total</p></div></div>
+                <div class="import-dropzone" id="dropzone">
+                    <svg viewBox="0 0 32 32" width="36" height="36" aria-hidden="true"><path d="M16 22V5m-6 6 6-6 6 6M5 21v6h22v-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <strong>Drop all seven files here</strong><span>or choose the exports from your computer</span>
+                    <label class="button" for="csv-files">Choose CSV files</label><input id="csv-files" type="file" multiple accept=".csv,text/csv" class="file-picker" />
+                </div>
+                <ul id="file-checklist" class="import-file-list"></ul>
+                <button id="validate-import" class="button primary import-wide" type="button" disabled>Validate snapshot</button>
+                <p class="import-footnote">Validation prepares a preview. It does not change the current dataset.</p>
+            </section>
+            <section class="import-panel" aria-labelledby="current-title">
+                <div class="import-panel-heading"><span class="step-number muted">●</span><div><h2 id="current-title">Current dataset</h2><p id="current-description">Checking the loaded files…</p></div></div>
+                <div id="current-counts" class="import-stat-grid"></div>
+                <div id="current-files" class="import-current-files"></div>
+                <h3>How imports work</h3>
+                <ul class="import-rules"><li>Each upload replaces the seven source tables as one dataset.</li><li>Repeated part lines are retained because the export has no unique line ID.</li><li>Only <strong>Satisfied</strong> (or <strong>Satified</strong>) counts as fulfilled. All other statuses count as not fulfilled.</li><li>Request dates use UK day/month/year format. IDs and leading zeroes are preserved.</li><li>The previous dataset remains available if validation fails.</li></ul>
+            </section>
+        </div>
+        <section id="preview-panel" class="import-panel import-preview" aria-labelledby="preview-title" hidden>
+            <div class="import-panel-heading"><span class="step-number">02</span><div><h2 id="preview-title">Review the import</h2><p id="preview-description"></p></div></div>
+            <div id="preview-counts" class="import-stat-grid"></div>
+            <div id="preview-diagnostics"></div>
+            <div class="import-apply-row"><p>This replaces the currently loaded snapshot for all signed-in users.</p><button id="apply-import" class="button primary" type="button">Use this dataset</button></div>
+        </section>
+    </main>
+    <footer class="imports-footer">Click Spares · Demand &amp; fulfilment intelligence</footer>
+</div>
+<script src="~/js/imports.js" asp-append-version="true" defer></script>
+</body>
+</html>

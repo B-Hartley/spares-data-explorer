@@ -1,0 +1,72 @@
+@page
+@model UsageModel
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session usage · Spares Data Explorer</title>
+  <link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="~/css/app.css" asp-append-version="true">
+</head>
+<body class="admin-page">
+<header class="page-header">
+  <div><p class="eyebrow">CLICK SPARES · ADMINISTRATION</p><h1>Session usage</h1><p class="muted">Sign-ins and estimated time online. Dates and times use UK local time (GMT/BST).</p></div>
+  <nav class="account-actions" aria-label="Administration">
+    <a asp-page="/Users" class="button secondary">Manage users</a><a asp-page="/Index" class="button secondary">Explorer</a>
+    <form method="post" asp-page="/Logout"><button type="submit" class="button secondary">Sign out</button></form>
+  </nav>
+</header>
+<main class="admin-main">
+  @if (!string.IsNullOrEmpty(Model.Error)) { <p role="alert" class="notice error">@Model.Error</p> }
+  <section class="panel" aria-labelledby="activity-filter-title">
+    <h2 id="activity-filter-title">Browse activity</h2>
+    <form method="get" asp-page="/Usage" class="form-grid">
+      <label class="form-field">From<input type="date" name="from" value="@Model.FromValue" required></label>
+      <label class="form-field">To<input type="date" name="to" value="@Model.ToValue" required></label>
+      <label class="form-field">User<select name="user">
+        <option value="" selected="@(string.IsNullOrEmpty(Model.SelectedUser))">All staff</option>
+        @foreach (var username in Model.AvailableUsers)
+        { <option value="@username" selected="@(username.Equals(Model.SelectedUser, StringComparison.OrdinalIgnoreCase))">@username</option> }
+      </select></label>
+      <button type="submit" class="button primary">Apply filters</button><a asp-page="/Usage" class="button secondary">Last 30 days</a>
+    </form>
+    <p class="muted">Select up to 366 days. Overlapping sessions for one user count once. Resuming activity after five minutes of inactivity creates a new interval without adding another sign-in.</p>
+  </section>
+  @if (string.IsNullOrEmpty(Model.Error))
+  {
+    <section class="panel" aria-label="Filtered activity totals">
+      <p><strong>@Model.SessionsFound.ToString("N0")</strong> activity intervals · <strong>@Model.DistinctUsers.ToString("N0")</strong> users · <strong>@Model.OnlineMinutes.ToString("N0")</strong> estimated online minutes</p>
+    </section>
+    <section class="panel" aria-labelledby="log-title">
+      <h2 id="log-title">Activity log</h2>
+      @if (Model.Rows.Count == 0) { <p>No activity matches this date range and user filter.</p> }
+      else
+      {
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>User</th><th>Started (UK)</th><th>Type</th><th>Last activity</th><th>Ended</th><th>Minutes in range</th><th>Connection IP</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var row in Model.Rows)
+            {
+              <tr><td>@row.Session.Username</td><td>@Model.FormatTimestamp(row.Session.StartedUtc)</td><td>@(row.Session.IsResumed ? "Activity resumed" : "Sign-in")</td>
+                <td>@Model.FormatTimestamp(row.Session.LastSeenUtc)</td><td>@(row.Status == "Active" ? "Active" : Model.FormatTimestamp(row.EffectiveEndUtc))</td>
+                <td>@row.MinutesWithinRange.ToString("N1")</td><td>@row.Session.IpAddress</td><td>@row.Status</td></tr>
+            }
+            </tbody>
+          </table>
+        </div>
+        <nav class="pagination" aria-label="Activity log pages">
+          @if (Model.HasPreviousPage)
+          { <a asp-page="/Usage" asp-route-from="@Model.FromValue" asp-route-to="@Model.ToValue" asp-route-user="@Model.SelectedUser" asp-route-pageNumber="@(Model.CurrentPage - 1)" class="button secondary">Previous</a> }
+          <span>Page @Model.CurrentPage of @Model.TotalPages · @Model.SessionsFound.ToString("N0") intervals</span>
+          @if (Model.HasNextPage)
+          { <a asp-page="/Usage" asp-route-from="@Model.FromValue" asp-route-to="@Model.ToValue" asp-route-user="@Model.SelectedUser" asp-route-pageNumber="@(Model.CurrentPage + 1)" class="button secondary">Next</a> }
+        </nav>
+      }
+      <p class="muted">Online time estimates connected activity; it is not a measure of work or attendance.</p>
+    </section>
+  }
+</main>
+</body>
+</html>
